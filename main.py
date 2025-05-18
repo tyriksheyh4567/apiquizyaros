@@ -120,7 +120,7 @@ async def main():
     try:
         response = ai_api.chat.completions.create(
             model="gpt-4.1-nano-2025-04-14",
-            messages=[{"role": "user", "content": f"Сгенерируй викторину в формате **JSON**, используя образец: {schema}. Отвечай только в формате JSON."}],
+            messages=[{"role": "user", "content": f"Сгенерируй викторину в формате **JSON**, используя образец: {schema}. Отвечай только в формате JSON. Тема - физика. Пару ключ-значение с ключом 'theme' оставляй такой же и делай по ней вопросы."}],
         )
         content = response.choices[0].message.content
         # Remove markdown code block markers if present
