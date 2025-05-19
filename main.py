@@ -123,13 +123,13 @@ def fetch_ai_response(class_num: int):
     try:
         json_data = json.loads(text)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Invalid JSON response from AI")
+        raise HTTPException(status_code=500, detail="Неверный JSON ответ от ИИ")
 
     return json_data
 
 @app.get("/")
 async def main(class_num: int = Query(None, ge=7, le=11)):
     if class_num is None:
-        raise HTTPException(status_code=400, detail="Missing required query parameter: class_num")
+        raise HTTPException(status_code=400, detail="Отсуствует нужный параметр: class_num")
     json_response = fetch_ai_response(class_num)
     return json_response
