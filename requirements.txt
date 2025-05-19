@@ -1,2 +1,2 @@
 aiml-api==0.1.4
-fastapi==0.115.12
+fastapi[standard]==0.115.2
