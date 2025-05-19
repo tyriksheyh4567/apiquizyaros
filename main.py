@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from aiml_api import AIML_API
 import json
@@ -20,7 +20,6 @@ app.add_middleware(
 )
 
 schema = '''{
-{
   "rounds": [
     {
       "round_number": 1,
@@ -115,21 +114,35 @@ schema = '''{
 }
 '''
 
-@app.get("/")
-async def main():
+from fastapi import HTTPException
+
+def fetch_ai_response(class_num: int):
+    response = ai_api.chat.completions.create(
+        model="gpt-4.1-mini-2025-04-14",
+        messages=[{
+            "role": "user",
+            "content": f"Напиши задачи по физике на **{class_num}** классе в формате **JSON**, используя образец: {schema}. 1-ый и 2-ой раунд - по 3 вопроса на каждый, 3 раунд - одна задача по физике. 1-ый раунд: учёные, правила, законы; 2-ой раунд - формулы, величины. Вывод только в JSON."
+        }]
+    )
+    text = response.choices[0].message.content
+
+    # Trim markdown json code block delimiters
+    if text.startswith("```json"):
+        text = text[len("```json"):].strip()
+    if text.endswith("```"):
+        text = text[:-3].strip()
+
+    # Parse JSON to ensure valid format
     try:
-        response = ai_api.chat.completions.create(
-            model="gpt-4.1-nano-2025-04-14",
-            messages=[{"role": "user", "content": f"Сгенерируй викторину в формате **JSON**, используя образец: {schema}. Отвечай только в формате JSON. Тема - физика. Пару ключ-значение с ключом 'theme' оставляй такой же и делай по ней вопросы."}],
-        )
-        content = response.choices[0].message.content
-        # Remove markdown code block markers if present
-        if content.startswith("```json"):
-            content = content[len("```json"):].strip()
-        if content.endswith("```"):
-            content = content[:-len("```")].strip()
-        parsed = json.loads(content)
-        return parsed
+        json_data = json.loads(text)
     except json.JSONDecodeError:
-        return {"error": "Failed to parse AI response as JSON", "raw_response": content}
-        # Remove markdown code block markers if present
+        raise HTTPException(status_code=500, detail="Invalid JSON response from AI")
+
+    return json_data
+
+@app.get("/")
+async def main(class_num: int = Query(None, ge=7, le=11)):
+    if class_num is None:
+        raise HTTPException(status_code=400, detail="Missing required query parameter: class_num")
+    json_response = fetch_ai_response(class_num)
+    return json_response
