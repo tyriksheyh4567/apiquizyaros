@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Query
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from aiml_api import AIML_API
 import json
@@ -116,13 +116,10 @@ def fetch_ai_response(class_num: int):
     )
     text = response.choices[0].message.content
 
-    # Trim markdown json code block delimiters
     if text.startswith("```json"):
         text = text[len("```json"):].strip()
     if text.endswith("```"):
         text = text[:-3].strip()
-
-    # Parse JSON to ensure valid format
     try:
         json_data = json.loads(text)
     except json.JSONDecodeError:
